@@ -1,0 +1,25 @@
+---
+
+on:
+  schedule:
+    - cron: '45 0 * * *'
+  push:
+    branches:
+      - master
+
+
+jobs:
+  build-kernel:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      # apt command taken from: https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel
+      - run: |
+          dnf install -y ncurses-devel gawk systemd-devel flex bison openssl-devel elfutils-devel autoconf git make gcc bc
+          git clone --depth 1 https://github.com/torvalds/linux.git
+          make -C linux defconfig
+          make -C linux -j6
+      - uses: actions/upload-artifact@v2
+        with:
+          name: vmlinuz-${{ github.run_id }}
+          path: ./linux/arch/x86/boot/bzImage
